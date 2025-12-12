@@ -76,3 +76,15 @@ class login(BaseModel):
    password: str
 
 
+class cardresponse(BaseModel):
+   cardid : int
+   userid: int
+   Name: str
+   card_no: str
+   cvv : int
+   pin : int
+   expiry: str
+   balance: int
+
+   class Config :
+      orm_mode =True

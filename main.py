@@ -72,3 +72,12 @@ def order(
    db: Session=Depends(get_db)
 ):
     return crud.order(db=db, user_id=user_id)
+
+
+
+@app.get('/user/{user_id}/card',response_model=schemas.cardresponse,status_code=200, tags=['card'])
+def get_card(
+   user_id: int,
+   db : Session=Depends(get_db)
+):
+   return crud.cards(db=db, user_id=user_id)

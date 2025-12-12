@@ -38,3 +38,16 @@ class CartItem(Base):
   cartid=Column(Integer,ForeignKey('cart.cartid'))
   productid=Column(Integer,ForeignKey('products.id'))
   quantity=Column(Integer,nullable=False)
+
+
+class Card(Base):
+  __tablename__='cards'
+
+  cardid=Column(Integer, primary_key=True,index=True)
+  userid=Column(Integer,ForeignKey("users.id"))
+  Name=Column(String,nullable=False)
+  card_no=Column(String(16),nullable=False,unique=True)
+  cvv=Column(Integer,nullable=False,unique=True)
+  pin=Column(Integer,nullable=False)
+  expiry=Column(String,nullable=False)
+  balance=Column(Integer,nullable=False)

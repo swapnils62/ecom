@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 import models,schemas
 from fastapi import HTTPException
 from pass_hash import Hashpass, verify
-
+from card import cardno_generator,cvv_generator,pin_generator
 
 # product:schemas.ProductCreate -- > Validates the input of user and store in product
 
@@ -37,6 +37,10 @@ def get_products(db:Session,skip:int=0,limit:int=10):
 
 
 
+# =============================api for user creation======================
+
+
+
 def create_user(db:Session, user:schemas.UserCreate):
   if user.password!=user.comformpass:
      raise HTTPException(status_code=400, detail="pass not match")
@@ -63,6 +67,10 @@ def create_user(db:Session, user:schemas.UserCreate):
 def get_user(db:Session,skip:int=0,limit:int=10):
   return db.query(models.Users).offset(skip).limit(limit).all()
 
+
+
+# =====================api for cart creation=========================
+
 def addcart(db: Session, cart: schemas.AddCart) -> schemas.cartresponse:
     # 1. check user exists
     user = db.query(models.Users).filter(models.Users.id == cart.userid).first()
@@ -86,6 +94,9 @@ def addcart(db: Session, cart: schemas.AddCart) -> schemas.cartresponse:
         cartid=newcart.cartid,   # use cartid from Cart model
         userid=newcart.userid
     )
+
+
+# ====================api for cartitem==========================
 
 
 def add_item(db: Session, item : schemas.AddItem, user_id : int, cart_id: int):
@@ -121,6 +132,10 @@ def add_item(db: Session, item : schemas.AddItem, user_id : int, cart_id: int):
    db.refresh(cart_item)
    return cart_item
 
+
+
+# =====================api for user login =======================
+
 def login(db:Session, login:schemas.login):
    
    user=db.query(models.Users).filter(models.Users.email==login.email).first()
@@ -129,6 +144,10 @@ def login(db:Session, login:schemas.login):
    if not verify(user.password, login.password):
         raise HTTPException(status_code=401, detail="Invalid password")
    return 'login sucessfull'
+
+
+
+# ======================api for orders========================
 
 def order(db:Session, user_id:int):
    user=db.query(models.Users).filter(models.Users.id==user_id).first()
@@ -150,3 +169,29 @@ def order(db:Session, user_id:int):
       total=total+product.price*i.quantity
    return cart_item,total
 
+
+
+# ==========================api for debit card details==================
+
+def cards(db:Session, user_id:int):
+   user=db.query(models.Users).filter(models.Users.id==user_id).first()
+   if not user:
+      raise HTTPException(status_code=404, detail='user not found')
+   cardno=cardno_generator()
+   cvv=cvv_generator()
+   pin=pin_generator()
+
+   db_card=models.Card(
+      Name=user.name,
+      userid=user_id,
+      card_no=cardno,
+      cvv=cvv,
+      pin=pin,
+      expiry='12/30',
+      balance=1000000
+   )
+
+   db.add(db_card)
+   db.commit()
+   db.refresh(db_card)
+   return db_card
