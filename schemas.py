@@ -1,0 +1,78 @@
+# To validate 
+
+from pydantic import BaseModel
+
+# to validate the incoming data whether datatype is valid else reject the request
+class ProductCreate(BaseModel):
+  name:str 
+  price:float
+  quantity:int
+
+
+# to validate the response user to get 
+
+class ProductResponse(ProductCreate):
+  id:int
+
+  class Config :
+    orm_mode=True
+
+'''
+Other way -- > 
+
+class ProductResponse(BaseModel):
+  id:int 
+  name:str 
+  price:float
+  quantity:int
+
+'''
+
+class UserCreate(BaseModel):
+  name:str
+  email:str
+  phone:str
+  password:str
+  comformpass:str
+
+class UserResponse(UserCreate):
+  id:int
+
+  class Config:
+    orm_mode=True
+
+
+
+
+
+class AddCart(BaseModel):
+    userid: int
+
+
+class cartresponse(BaseModel):
+    cartid: int
+    userid: int
+
+    class Config:
+        orm_mode = True
+
+class AddItem(BaseModel):
+    productid: int
+    quantity: int
+
+
+class ItemResponse(BaseModel):
+    itemid: int
+    cartid: int
+    productid: int
+    quantity: int
+
+    class Config:
+        orm_mode = True
+
+
+class login(BaseModel):
+   email: str
+   password: str
+
+
