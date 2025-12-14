@@ -19,6 +19,7 @@ def create_product(db:Session,product:schemas.ProductCreate) :
     price=product.price,
     quantity=product.quantity
   )
+  
 
   # finally data enters and commit 
   db.add(db_product)
@@ -42,8 +43,12 @@ def get_products(db:Session,skip:int=0,limit:int=10):
 
 
 def create_user(db:Session, user:schemas.UserCreate):
+  
+  # first check password match or not
   if user.password!=user.comformpass:
-     raise HTTPException(status_code=400, detail="pass not match")
+     raise HTTPException(status_code=400, detail="password not match")
+  
+  # check for user alrady exist or not 
   existing_user = db.query(models.Users).filter(models.Users.email == user.email).first()
   if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -80,7 +85,7 @@ def addcart(db: Session, cart: schemas.AddCart) -> schemas.cartresponse:
     # 2. check if user already has a cart
     usercart = db.query(models.Cart).filter(models.Cart.userid == cart.userid).first()
     if usercart:
-       raise HTTPException(status_code=400, detail="User cart already present")
+       raise HTTPException(status_code=400, detail="Cart already present for this user")
     
     # 3. create new cart
     newcart = models.Cart(userid=cart.userid)
@@ -101,17 +106,22 @@ def addcart(db: Session, cart: schemas.AddCart) -> schemas.cartresponse:
 
 def add_item(db: Session, item : schemas.AddItem, user_id : int, cart_id: int):
    
+   # first find the user car with user id 
    cart= db.query(models.Cart).filter(models.Cart.cartid==cart_id, models.Cart.userid==user_id).first()
    if not cart:
       raise HTTPException(status_code=404, detail='cart not found for this user')
    
+   #then check for the product exsit or not
    product=db.query(models.Product).filter(models.Product.id==item.productid).first()
    if not product:
       raise HTTPException(status_code=404, detail='product not found')
    
+   # then check for the quantity of product is grater then user given quantity
    if product.quantity<item.quantity:
-      raise HTTPException(status_code=400, detail='out of stock')
+      raise HTTPException(status_code=400, detail=f'out of stock the availabe qty is{product.quantity}')
    
+   # after that check the product is alrady prsent in cart or not if present then incress the quantity  
+   # else add new product in the cart
    alradyproduct=db.query(models.CartItem).filter(models.CartItem.cartid==cart_id,models.CartItem.productid==item.productid).first()
    if alradyproduct:
       alradyproduct.quantity+=item.quantity
@@ -119,6 +129,7 @@ def add_item(db: Session, item : schemas.AddItem, user_id : int, cart_id: int):
       db.commit()
       return alradyproduct
    
+
    product.quantity-=item.quantity
 
    cart_item=models.CartItem(
@@ -141,7 +152,7 @@ def login(db:Session, login:schemas.login):
    user=db.query(models.Users).filter(models.Users.email==login.email).first()
    if not user :
       raise HTTPException(status_code=404,detail='invalid email')
-   if not verify(user.password, login.password):
+   if verify(user.password, login.password)!=True:
         raise HTTPException(status_code=401, detail="Invalid password")
    return 'login sucessfull'
 
@@ -150,24 +161,29 @@ def login(db:Session, login:schemas.login):
 # ======================api for orders========================
 
 def order(db:Session, user_id:int):
+
+   # check user is present or not
    user=db.query(models.Users).filter(models.Users.id==user_id).first()
    if not user :
       raise HTTPException(status_code=404, detail='user not found')
    
+   # find the cart for the user 
    user_cart=db.query(models.Cart).filter(models.Cart.userid==user_id).first()
    if not user_cart:
       raise HTTPException(status_code=404, detail='cart not found for user')
    
+   # find the all the cart item present in the cart 
    cart_item=db.query(models.CartItem).filter(models.CartItem.cartid==user_cart.cartid).all()
    if not cart_item:
       raise HTTPException(status_code=404, detail="item not added")
    
+   # make the total of all product price
    total=0
    for i in cart_item:
       product=db.query(models.Product).filter(models.Product.id==i.productid).first()
-      
+   
       total=total+product.price*i.quantity
-   return cart_item,total
+   return cart_item,f"Grand total={total}"
 
 
 

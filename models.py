@@ -5,6 +5,9 @@ from database import Base
 
 # products -- > table name  & __tablename__ : attribute to create a table 
 
+
+# ============product table====================
+
 class Product(Base):
   __tablename__="products"
 
@@ -14,6 +17,9 @@ class Product(Base):
   name=Column(String,nullable=False)
   price=Column(Float,nullable=False)
   quantity=Column(Integer,nullable=False)
+
+
+# ==============user table ================
 
 class Users(Base):
   __tablename__='users'
@@ -25,11 +31,16 @@ class Users(Base):
   password=Column(String,nullable=False)
   comformpass=Column(String,nullable=False)
 
+
+# ================cart teble =================
+
 class Cart(Base):
   __tablename__='cart'
 
   cartid=Column(Integer,primary_key=True,index=True)
   userid=Column(Integer,ForeignKey("users.id"))
+
+# ==============cart item table ===============
 
 class CartItem(Base):
   __tablename__='cartitem'
@@ -40,6 +51,8 @@ class CartItem(Base):
   quantity=Column(Integer,nullable=False)
 
 
+
+# ================card table================
 class Card(Base):
   __tablename__='cards'
 

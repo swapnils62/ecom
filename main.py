@@ -27,6 +27,8 @@ def get_db():
   finally :
     db.close()
 
+#====================api for product =========================
+
 @app.post("/products/", response_model=schemas.ProductResponse , status_code=201,tags=["product"])
 def create_product(product: schemas.ProductCreate, db: Session = Depends(get_db)):
     return crud.create_product(db=db, product=product)
@@ -35,6 +37,9 @@ def create_product(product: schemas.ProductCreate, db: Session = Depends(get_db)
 def read_products(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     return crud.get_products(db=db, skip=skip, limit=limit)
 
+
+# ==============api for user ========================
+
 @app.post("/user",response_model=schemas.UserResponse , status_code=201,tags=["user"])
 def create_user(user: schemas.UserCreate, db:Session=Depends(get_db)):
    return crud.create_user(db=db,user=user)
@@ -42,6 +47,9 @@ def create_user(user: schemas.UserCreate, db:Session=Depends(get_db)):
 @app.get("/user", response_model=list[schemas.UserResponse],tags=["user"])
 def read_user(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     return crud.get_user(db=db, skip=skip, limit=limit)
+
+
+#=====================api for user car================
 
 @app.post("/user/cart", response_model=schemas.cartresponse, status_code=201, tags=["cart"])
 def create_cart(
@@ -59,12 +67,19 @@ def add_item(
 ):
    return crud.add_item(db=db, item=item,user_id=user_id,cart_id=cart_id)
 
+
+# ===================api for user login ==============
+
 @app.post('/login',status_code=200,tags=['login'])
 def login(
    login: schemas.login,
    db: Session=Depends(get_db)
 ):
    return crud.login(db=db,login=login)
+
+
+
+#==================== api for user orders======================= 
 
 @app.get('/user/{user_id}/order',status_code=200,tags=['order'])
 def order(
@@ -74,6 +89,7 @@ def order(
     return crud.order(db=db, user_id=user_id)
 
 
+# ========================api for card generator====================
 
 @app.get('/user/{user_id}/card',response_model=schemas.cardresponse,status_code=200, tags=['card'])
 def get_card(
