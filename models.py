@@ -64,3 +64,36 @@ class Card(Base):
   pin=Column(Integer,nullable=False)
   expiry=Column(String,nullable=False)
   balance=Column(Integer,nullable=False)
+
+
+
+
+class Address(Base):
+  __tablename__='address'
+
+  id=Column(Integer,primary_key=True,index=True)
+  userid=Column(Integer,ForeignKey('users.id'))
+  address=Column(String,nullable=False)
+  city=Column(String,nullable=False)
+  state=Column(String,nullable=False)
+  pincode=Column(String,nullable=False)
+
+
+class Order(Base):
+  __tablename__='order'
+  orderid=Column(Integer,primary_key=True,index=True)
+  userid=Column(Integer,ForeignKey('users.id'))
+  addressid=Column(Integer,ForeignKey('address.id'))
+  paymenttype=Column(String,nullable=False)
+  total=Column(Integer,nullable=False)
+  status=Column(String,nullable=False)
+
+class orderitem(Base):
+  __tablename__='orderitem'
+  itemid=Column(Integer,primary_key=True,index=True)
+  orderid=Column(Integer,ForeignKey('order.orderid'))
+  productid=Column(Integer,ForeignKey('products.id'))
+  quantity=Column(Integer,nullable=False)
+  price=Column(Integer,nullable=False)
+  subtotal=Column(Integer,nullable=False)
+

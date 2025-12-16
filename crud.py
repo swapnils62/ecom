@@ -73,6 +73,29 @@ def get_user(db:Session,skip:int=0,limit:int=10):
   return db.query(models.Users).offset(skip).limit(limit).all()
 
 
+# ====================api for address======================
+def add_address(db: Session, address:schemas.address, userid: int):
+   user=db.query(models.Users).filter(models.Users.id==userid)
+   if not user:
+      raise HTTPException(status_code=404, detail="user not found")
+   
+   db_address=models.Address(
+      userid=userid,
+      address=address.address,
+      city=address.city,
+      state=address.state,
+      pincode=address.pincode
+   )
+
+   db.add(db_address)
+   db.commit()
+   db.refresh(db_address)
+   return db_address
+
+
+def get_address(db:Session, userid:int, skip:int=0, limit:int=10):
+   return db.query(models.Address).filter(models.Address.userid==userid).offset(skip).limit(limit).all()
+
 
 # =====================api for cart creation=========================
 
@@ -107,7 +130,7 @@ def addcart(db: Session, cart: schemas.AddCart) -> schemas.cartresponse:
 def add_item(db: Session, item : schemas.AddItem, user_id : int, cart_id: int):
    
    # first find the user car with user id 
-   cart= db.query(models.Cart).filter(models.Cart.cartid==cart_id, models.Cart.userid==user_id).first()
+   cart= db.query(models.Cart).filter(models.Cart.cartid==cart_id,models.Cart.userid==user_id).first()
    if not cart:
       raise HTTPException(status_code=404, detail='cart not found for this user')
    
@@ -158,9 +181,9 @@ def login(db:Session, login:schemas.login):
 
 
 
-# ======================api for orders========================
+# ======================api for showing total of cart========================
 
-def order(db:Session, user_id:int):
+def cart_total(db:Session, user_id:int):
 
    # check user is present or not
    user=db.query(models.Users).filter(models.Users.id==user_id).first()
@@ -184,6 +207,75 @@ def order(db:Session, user_id:int):
    
       total=total+product.price*i.quantity
    return cart_item,f"Grand total={total}"
+
+
+#===========================api for order=============
+
+def order(db:Session, userid:int, orderplace:schemas.orderplace):
+   user=db.query(models.Users).filter(models.Users.id==userid).first()
+   if not user:
+      raise HTTPException(status_code=404, detail='user not found')
+
+   user_cart=db.query(models.Cart).filter(models.Cart.userid==userid).first()
+   if not user_cart:
+      raise HTTPException(status_code=404, detail='cart not found for user')
+
+
+   cart_item=db.query(models.CartItem).filter(models.CartItem.cartid==user_cart.cartid).all()
+   if not cart_item:
+      raise HTTPException(status_code=404, detail="item not added")
+   
+
+   total=0
+   for i in cart_item:
+      product=db.query(models.Product).filter(models.Product.id==i.productid).first()
+   
+      total=total+product.price*i.quantity
+   
+   address=db.query(models.Address).filter(models.Address.userid==user.id,models.Address.id==orderplace.addressid).first()
+   if not address:
+      raise HTTPException(status_code=404, detail='address not present')
+   
+   if orderplace.paymenttype=='cod':
+      pass
+   
+   elif orderplace.paymenttype=='debit':
+      validcard=db.query(models.Card).filter(models.Card.userid==userid,models.Card.card_no==orderplace.cardno,
+                                             models.Card.cvv==orderplace.cvv,
+                                             models.Card.pin==orderplace.pin).first()
+      if not validcard:
+         raise HTTPException(status_code=404, detail='card is not vaild')
+      
+      if validcard.balance<total:
+         raise HTTPException(status_code=401, detail='insuficient balance')
+      
+      validcard.balance-=total
+
+   db_order=models.Order(
+      userid=userid,
+      addressid=orderplace.addressid,
+      paymenttype=orderplace.paymenttype,
+      total=total,
+      status='placed')
+   db.add(db_order)
+   db.flush()
+
+   for i in cart_item:
+      product=db.query(models.Product).filter(models.Product.id==i.productid).first()
+   
+      db_orderitem=models.orderitem(
+         orderid=db_order.orderid,
+         productid=i.productid,
+         quantity=i.quantity,
+         price=product.price,
+         subtotal=product.price*i.quantity
+      )
+      db.add(db_orderitem)
+   for i in cart_item:
+      db.delete(i)
+   db.commit()
+   db.refresh(db_order)
+   return db_order
 
 
 

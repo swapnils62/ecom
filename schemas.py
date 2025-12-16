@@ -43,15 +43,12 @@ class UserResponse(UserCreate):
 
 
 
-
-
 class AddCart(BaseModel):
     userid: int
 
 
-class cartresponse(BaseModel):
+class cartresponse(AddCart):
     cartid: int
-    userid: int
 
     class Config:
         orm_mode = True
@@ -61,11 +58,9 @@ class AddItem(BaseModel):
     quantity: int
 
 
-class ItemResponse(BaseModel):
+class ItemResponse(AddItem):
     itemid: int
     cartid: int
-    productid: int
-    quantity: int
 
     class Config:
         orm_mode = True
@@ -88,3 +83,34 @@ class cardresponse(BaseModel):
 
    class Config :
       orm_mode =True
+
+
+class address(BaseModel):
+  address: str
+  city: str
+  state: str
+  pincode: str
+
+class AddressResponse(address):
+    id: int
+    userid: int
+
+    class Config:
+        orm_mode = True
+
+class orderplace(BaseModel):
+   addressid:int
+   paymenttype:str
+   cardno:str
+   cvv:int
+   pin:int
+  
+class orderresponse(BaseModel):
+   orderid:int
+   addressid:int
+   paymenttype:str
+   userid:int
+   total:int
+
+   class Config:
+      orm_mode=True

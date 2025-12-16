@@ -38,6 +38,8 @@ def read_products(skip: int = 0, limit: int = 10, db: Session = Depends(get_db))
     return crud.get_products(db=db, skip=skip, limit=limit)
 
 
+
+
 # ==============api for user ========================
 
 @app.post("/user",response_model=schemas.UserResponse , status_code=201,tags=["user"])
@@ -49,7 +51,39 @@ def read_user(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     return crud.get_user(db=db, skip=skip, limit=limit)
 
 
-#=====================api for user car================
+# ===================api for user login ==============
+
+@app.post('/login',status_code=200,tags=['login'])
+def login(
+   login: schemas.login,
+   db: Session=Depends(get_db)
+):
+   return crud.login(db=db,login=login)
+
+
+#============api for address creation====================
+@app.post('/user/{userid}/address', response_model=schemas.AddressResponse,status_code=201, tags=['address'])
+def add_address(
+   userid:int,
+   address:schemas.address, 
+   db:Session=Depends(get_db)
+   ):
+   return crud.add_address(db=db,address=address,userid=userid)
+
+
+
+
+@app.get('/user/{userid}/address',response_model=list[schemas.AddressResponse],tags=['address'])
+def get_address(
+   userid: int,
+   skip: int=0,
+   limit: int=10,
+   db: Session=Depends(get_db),
+):
+   return crud.get_address(db=db,skip=skip,limit=limit,userid=userid)
+
+
+#=====================api for user cart================
 
 @app.post("/user/cart", response_model=schemas.cartresponse, status_code=201, tags=["cart"])
 def create_cart(
@@ -68,25 +102,22 @@ def add_item(
    return crud.add_item(db=db, item=item,user_id=user_id,cart_id=cart_id)
 
 
-# ===================api for user login ==============
-
-@app.post('/login',status_code=200,tags=['login'])
-def login(
-   login: schemas.login,
-   db: Session=Depends(get_db)
-):
-   return crud.login(db=db,login=login)
-
 
 
 #==================== api for user orders======================= 
 
-@app.get('/user/{user_id}/order',status_code=200,tags=['order'])
+@app.get('/user/{user_id}/carttotal',status_code=200,tags=['carttotal'])
 def order(
    user_id: int,
    db: Session=Depends(get_db)
 ):
-    return crud.order(db=db, user_id=user_id)
+    return crud.cart_total(db=db, user_id=user_id)
+
+
+#==============api for order palce =============
+@app.post('/user/{userid}/order',response_model=schemas.orderresponse,status_code=201,tags=['Place order'])
+def order_place(userid:int,orderplace:schemas.orderplace,db:Session=Depends(get_db)):
+   return crud.order(db=db,userid=userid,orderplace=orderplace)
 
 
 # ========================api for card generator====================
@@ -97,3 +128,4 @@ def get_card(
    db : Session=Depends(get_db)
 ):
    return crud.cards(db=db, user_id=user_id)
+
