@@ -114,3 +114,28 @@ class orderresponse(BaseModel):
 
    class Config:
       orm_mode=True
+
+
+
+class wishlist(BaseModel):
+    userid: int
+
+
+class wishlistresponse(wishlist):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+class wishlistItem(BaseModel):
+    productid: int
+
+
+
+class wishlistitemResponse(wishlistItem):
+    id: int
+    wishlistid: int
+
+    class Config:
+        orm_mode = True
+

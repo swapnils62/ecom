@@ -11,7 +11,7 @@ Base.metadata.create_all(bind=engine)
 app=FastAPI(
    title="Ecom project",
    description='''
-      [Baseurl=http://127.0.0.1:800/]
+      [Baseurl=http://127.0.0.1:8000/]
 
 '''
 )
@@ -92,19 +92,28 @@ def create_cart(
 ):
     return crud.addcart(db=db, cart=cart)
 
-@app.post('/user/{user_id}/cart/{cart_id}/item', response_model=schemas.ItemResponse, status_code=201, tags=['cart'])
+@app.post('/user/{user_id}/item', response_model=schemas.ItemResponse, status_code=201, tags=['cart'])
 def add_item(
    user_id :int,
-   cart_id : int,
    item : schemas.AddItem,
    db: Session =Depends(get_db)
 ):
-   return crud.add_item(db=db, item=item,user_id=user_id,cart_id=cart_id)
+   return crud.add_item(db=db, item=item,user_id=user_id)
+
+@app.get('/user/{userid}/cartitem',response_model=list[schemas.ItemResponse],status_code=200,tags=['cart'])
+def get_cart_item(
+   userid:int,
+   db:Session=Depends(get_db),
+   limit:int=10,
+   skip:int=0,
+   ):
+   return crud.get_cart_item(db=db,userid=userid,skip=skip,limit=limit)
 
 
 
 
-#==================== api for user orders======================= 
+
+#==================== api for user orders total======================= 
 
 @app.get('/user/{user_id}/carttotal',status_code=200,tags=['carttotal'])
 def order(
@@ -129,3 +138,37 @@ def get_card(
 ):
    return crud.cards(db=db, user_id=user_id)
 
+
+#================wishlist apis============
+@app.post('/user/wishlist',response_model=schemas.wishlistresponse, status_code=201,tags=['wishlist'])
+def create_wishlist(
+   wish:schemas.wishlist,
+   db:Session=Depends(get_db)
+   ):
+   return crud.whislist(wish=wish,db=db)
+
+@app.post('/user/{userid}/wishlist',response_model=schemas.wishlistitemResponse,status_code=200,tags=['wishlist'])
+def add_item_wish(
+   userid:int,
+   item:schemas.wishlistItem,
+   db:Session=Depends(get_db)
+):
+   return crud.wishlistitem(userid=userid,item=item,db=db)
+
+@app.get('/user/{userid}/wishitem',response_model=list[schemas.wishlistitemResponse],status_code=200,tags=['wishlist'])
+def get_item(
+   userid:int,
+   db:Session=Depends(get_db),
+   skip:int=0,
+   limit:int=10
+):
+   return crud.get_itemwish(userid=userid,db=db,skip=skip,limit=limit)
+
+
+@app.post('/user/{userid}/wishlistcart',response_model=schemas.ItemResponse,status_code=200, tags=['wishlist'])
+def add_wish_item(
+   userid:int,
+   item:schemas.AddItem,
+   db:Session=Depends(get_db)
+):
+   return crud.add_wish_cart(db=db,userid=userid,item=item)

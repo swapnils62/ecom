@@ -97,3 +97,19 @@ class orderitem(Base):
   price=Column(Integer,nullable=False)
   subtotal=Column(Integer,nullable=False)
 
+
+
+
+
+# =======================wishlist table =============
+class wishlist(Base):
+  __tablename__='wishlist'
+  id=Column(Integer,primary_key=True,index=True)
+  userid=Column(Integer,ForeignKey('users.id'))
+
+class wishlist_item(Base):
+  __tablename__='wishlistitem'
+  id=Column(Integer,primary_key=True,index=True)
+  wishlistid=Column(Integer,ForeignKey('wishlist.id'))
+  productid=Column(Integer,ForeignKey('products.id'))
+

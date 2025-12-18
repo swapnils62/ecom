@@ -75,7 +75,7 @@ def get_user(db:Session,skip:int=0,limit:int=10):
 
 # ====================api for address======================
 def add_address(db: Session, address:schemas.address, userid: int):
-   user=db.query(models.Users).filter(models.Users.id==userid)
+   user=db.query(models.Users).filter(models.Users.id==userid).first()
    if not user:
       raise HTTPException(status_code=404, detail="user not found")
    
@@ -94,7 +94,13 @@ def add_address(db: Session, address:schemas.address, userid: int):
 
 
 def get_address(db:Session, userid:int, skip:int=0, limit:int=10):
-   return db.query(models.Address).filter(models.Address.userid==userid).offset(skip).limit(limit).all()
+   user=db.query(models.Users).filter(models.Users.id==userid).first()
+   if not user:
+      raise HTTPException(status_code=404,detail='user not found')
+   address=db.query(models.Address).filter(models.Address.userid==user.id).offset(skip).limit(limit).all()
+   if not address:
+      raise HTTPException(status_code=404 , detail='address not found')
+   return address
 
 
 # =====================api for cart creation=========================
@@ -127,12 +133,13 @@ def addcart(db: Session, cart: schemas.AddCart) -> schemas.cartresponse:
 # ====================api for cartitem==========================
 
 
-def add_item(db: Session, item : schemas.AddItem, user_id : int, cart_id: int):
-   
-   # first find the user car with user id 
-   cart= db.query(models.Cart).filter(models.Cart.cartid==cart_id,models.Cart.userid==user_id).first()
+def add_item(db: Session, item : schemas.AddItem, user_id : int):
+   user=db.query(models.Users).filter(models.Users.id==user_id).first()
+   if not user:
+      raise HTTPException(status_code=404, detail='user not found')
+   cart=db.query(models.Cart).filter(models.Cart.userid==user.id).first()
    if not cart:
-      raise HTTPException(status_code=404, detail='cart not found for this user')
+      raise HTTPException(status_code=404,detail='user cart not found')
    
    #then check for the product exsit or not
    product=db.query(models.Product).filter(models.Product.id==item.productid).first()
@@ -145,7 +152,7 @@ def add_item(db: Session, item : schemas.AddItem, user_id : int, cart_id: int):
    
    # after that check the product is alrady prsent in cart or not if present then incress the quantity  
    # else add new product in the cart
-   alradyproduct=db.query(models.CartItem).filter(models.CartItem.cartid==cart_id,models.CartItem.productid==item.productid).first()
+   alradyproduct=db.query(models.CartItem).filter(models.CartItem.cartid==cart.cartid,models.CartItem.productid==item.productid).first()
    if alradyproduct:
       alradyproduct.quantity+=item.quantity
       product.quantity-=item.quantity
@@ -156,7 +163,7 @@ def add_item(db: Session, item : schemas.AddItem, user_id : int, cart_id: int):
    product.quantity-=item.quantity
 
    cart_item=models.CartItem(
-      cartid=cart_id,
+      cartid=cart.cartid,
       productid=item.productid,
       quantity=item.quantity
 
@@ -165,6 +172,18 @@ def add_item(db: Session, item : schemas.AddItem, user_id : int, cart_id: int):
    db.commit()
    db.refresh(cart_item)
    return cart_item
+
+def get_cart_item(db:Session,userid:int,skip:int=0 ,limit:int=10):
+   user=db.query(models.Users).filter(models.Users.id==userid).first()
+   if not user:
+      raise HTTPException(status_code=404, detail='user not found')
+   cart=db.query(models.Cart).filter(models.Cart.userid==user.id).first()
+   if not cart:
+      raise HTTPException(status_code=404,detail='user cart not found')
+   cartitem=db.query(models.CartItem).filter(models.CartItem.cartid==cart.cartid).offset(skip).limit(limit).all()
+   if not cartitem:
+      raise HTTPException(status_code=404,detail='not item found')
+   return cartitem
 
 
 
@@ -303,3 +322,110 @@ def cards(db:Session, user_id:int):
    db.commit()
    db.refresh(db_card)
    return db_card
+
+
+#===================crud for wishlist==================
+def whislist(db:Session, wish:schemas.wishlist):
+   user=db.query(models.Users).filter(models.Users.id==wish.userid).first()
+   if not user:
+      raise HTTPException(status_code=404, detail='usre not found')
+   
+   alradywishlist=db.query(models.wishlist).filter(models.wishlist.userid==wish.userid).first()
+   if alradywishlist:
+      raise HTTPException(status_code=400, detail='user alrady have wishlist')
+   
+   db_wishlist=models.wishlist(
+      userid=wish.userid
+   )
+   db.add(db_wishlist)
+   db.commit()
+   db.refresh(db_wishlist)
+   return db_wishlist
+
+
+
+def wishlistitem(db:Session, item: schemas.wishlistItem, userid:int):
+   user=db.query(models.Users).filter(models.Users.id==userid).first()
+   if not user:
+      raise HTTPException(status_code=404, detail="user not found")
+   
+   wishlist=db.query(models.wishlist).filter(models.wishlist.userid==userid).first()
+   if not wishlist:
+      raise HTTPException(status_code=404, detail='wishlist not present for this user')
+   
+   product=db.query(models.Product).filter(models.Product.id==item.productid).first()
+   if not product:
+      raise HTTPException(status_code=404, detail='product not found')
+   
+   alradyproduct=db.query(models.wishlist_item).filter(models.wishlist_item.productid==product.id).first()
+   if alradyproduct:
+      raise HTTPException(status_code=400, detail='product alrady in the cart')
+
+   db_item=models.wishlist_item(
+      wishlistid=wishlist.id,
+      productid=product.id
+   )
+   db.add(db_item)
+   db.commit()
+   db.refresh(db_item)
+   return db_item
+
+def get_itemwish(db:Session,userid:int,skip:int=0,limit:int=10):
+   user=db.query(models.Users).filter(models.Users.id==userid).first()
+   if not user:
+      raise HTTPException(status_code=404, detail='usre not found')
+   
+   wishlist=db.query(models.wishlist).filter(models.wishlist.userid==user.id).first()
+   if not wishlist:
+      raise HTTPException(status_code=404, detail='user wishlist not found')
+   
+   item=db.query(models.wishlist_item).filter(models.wishlist_item.wishlistid==wishlist.id).offset(skip).limit(limit).all()
+   if not item:
+      raise HTTPException(status_code=404, detail='item not avalable')
+   return item
+
+
+def add_wish_cart(db:Session, userid:int, item:schemas.AddItem):
+   user=db.query(models.Users).filter(models.Users.id==userid).first()
+   if not user:
+      raise HTTPException(status_code=404, detail='user not found')
+   wishlist=db.query(models.wishlist).filter(models.wishlist.userid==user.id).first()
+   if not wishlist:
+      raise HTTPException(status_code=404, detail='user wishlist not found')
+   items=db.query(models.wishlist_item).filter(models.wishlist_item.wishlistid==wishlist.id,models.wishlist_item.productid==item.productid).first()
+   if not items:
+      raise HTTPException(status_code=404,detail='item not found in wishlist')
+   
+   product=db.query(models.Product).filter(models.Product.id==items.productid).first()
+   if not product:
+      raise HTTPException(status_code=404, detail='product not found')
+   
+   if product.quantity<item.quantity:
+      raise HTTPException(status_code=400, detail=f'quantity not avalialble, avalable qurantity is {product.quantity}')
+   
+   cart=db.query(models.Cart).filter(models.Cart.userid==userid).first()
+   if not cart:
+      raise HTTPException(status_code=404, detail='cart not avalable')
+   
+   alradyproduct=db.query(models.CartItem).filter(models.CartItem.cartid==cart.cartid,models.CartItem.productid==items.productid).first()
+   if alradyproduct:
+      alradyproduct.quantity+=item.quantity
+      product.quantity-=item.quantity
+      db.delete(items)
+      db.commit()
+      db.refresh(alradyproduct)
+      return alradyproduct
+   
+
+   product.quantity-=item.quantity
+
+   cart_item=models.CartItem(
+      cartid=cart.cartid,
+      productid=item.productid,
+      quantity=item.quantity
+   )
+   db.add(cart_item)
+   db.delete(items)
+   db.commit()
+   db.refresh(cart_item)
+   return cart_item
