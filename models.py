@@ -29,7 +29,6 @@ class Users(Base):
   email=Column(String,unique=True,nullable=False)
   phone=Column(String,nullable=False,unique=True)
   password=Column(String,nullable=False)
-  comformpass=Column(String,nullable=False)
 
 
 # ================cart teble =================

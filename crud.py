@@ -60,8 +60,7 @@ def create_user(db:Session, user:schemas.UserCreate):
     name=user.name,
     email=user.email,
     phone=user.phone,
-    password=hashpass,
-    comformpass=hashpass
+    password=hashpass
   )
 
   db.add(db_user)
@@ -196,7 +195,11 @@ def login(db:Session, login:schemas.login):
       raise HTTPException(status_code=404,detail='invalid email')
    if verify(user.password, login.password)!=True:
         raise HTTPException(status_code=401, detail="Invalid password")
-   return 'login sucessfull'
+   return {
+       "message":"login successful",
+       "id": user.id,
+       "name": user.name
+   }
 
 
 

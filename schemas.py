@@ -35,8 +35,11 @@ class UserCreate(BaseModel):
   password:str
   comformpass:str
 
-class UserResponse(UserCreate):
+class UserResponse(BaseModel):
   id:int
+  name:str
+  email:str
+  phone:str
 
   class Config:
     orm_mode=True

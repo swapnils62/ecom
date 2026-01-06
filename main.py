@@ -4,6 +4,7 @@ from fastapi import FastAPI,Depends,HTTPException
 from sqlalchemy.orm import Session
 import models,schemas,crud
 from database import engine,SessionLocal,Base
+from fastapi.middleware.cors import CORSMiddleware
 
 # create table if not exist
 Base.metadata.create_all(bind=engine)
@@ -14,6 +15,14 @@ app=FastAPI(
       [Baseurl=http://127.0.0.1:8000/]
 
 '''
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Dependency for db 
